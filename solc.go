@@ -1,4 +1,4 @@
-package solc
+package gosolc
 
 import (
 	"encoding/json"
