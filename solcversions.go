@@ -1,4 +1,4 @@
-package main
+package solc
 
 import _ "embed"
 

@@ -1,4 +1,4 @@
-module github.com/0xsharma/go-solc
+module github.com/0xsharma/gosolc
 
 go 1.22.6
 
