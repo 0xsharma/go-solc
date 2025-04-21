@@ -1,5 +1,6 @@
 package gosolc
 
+// wrapperScript is a JavaScript wrapper for the solc-js compiler.
 const wrapperScript = `
 var Module = {
 	locateFile: function(path) { return path; },

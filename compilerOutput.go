@@ -2,8 +2,13 @@ package gosolc
 
 import "fmt"
 
+// CompilerOutput represents the output of the Solidity compiler.
+// It is a map where the keys are file names and the values are maps of contract names to their respective output data.
+// The output data includes information such as ABI, bytecode, and source maps.
 type CompilerOutput map[string]interface{}
 
+// GetContractByteCodes retrieves the bytecode for each contract in the compiler output.
+// It returns a map where the keys are contract names and the values are their respective bytecode strings.
 func (contracts CompilerOutput) GetContractByteCodes() (map[string]string, error) {
 	contractByteCodes := make(map[string]string)
 
@@ -24,6 +29,9 @@ func (contracts CompilerOutput) GetContractByteCodes() (map[string]string, error
 	return contractByteCodes, nil
 }
 
+// GetDeployedContractByteCodes retrieves the deployed bytecode for each contract in the compiler output.
+// It returns a map where the keys are contract names and the values are their respective deployed bytecode strings.
+// This is useful for verifying the deployed contract on the blockchain.
 func (contracts CompilerOutput) GetDeployedContractByteCodes() (map[string]string, error) {
 	contractByteCodes := make(map[string]string)
 

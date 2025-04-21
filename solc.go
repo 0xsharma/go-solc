@@ -3,27 +3,30 @@ package gosolc
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"rogchap.com/v8go"
 )
 
+// CompilerOutput is a map of contract names to their compiled output
 type SolcOptimizerConfig struct {
-	Enabled bool `json:"enabled"`
-	Runs    int  `json:"runs"`
+	Enabled bool `json:"enabled"` // Indicates if the optimizer is enabled
+	Runs    int  `json:"runs"`    // Number of optimization runs
 }
 
+// CompilerOutput is a map of contract names to their compiled output
 type CompilerConfig struct {
-	EVMVersion    string               `json:"evmVersion"`
-	SolcOptimizer *SolcOptimizerConfig `json:"optimizer"`
+	EVMVersion    string               `json:"evmVersion"` // EVM version to use for compilation
+	SolcOptimizer *SolcOptimizerConfig `json:"optimizer"`  // Optimizer configuration
 }
 
+// defaultConfig is the default compiler configuration
 var defaultConfig = &CompilerConfig{
-	EVMVersion:    "cancun",
-	SolcOptimizer: &SolcOptimizerConfig{Enabled: false, Runs: 0},
+	EVMVersion:    "cancun",                                      // Default EVM version
+	SolcOptimizer: &SolcOptimizerConfig{Enabled: false, Runs: 0}, // Default optimizer configuration
 }
 
+// NewCompilerConfig creates a new CompilerConfig with the specified EVM version and optimizer settings.
+// Supported EVMVersions: "osaka", "cancun", "shanghai", "paris", "london", "berlin", "istanbul", "petersburg", "constantinople", "byzantium", "homestead", "spuriousDragon", "tangerineWhistle", "frontier"
 func NewCompilerConfig(EVMVersion string, OptimizerEnabled bool, OptimizerRuns uint) *CompilerConfig {
 	return &CompilerConfig{
 		EVMVersion:    EVMVersion,
@@ -31,6 +34,9 @@ func NewCompilerConfig(EVMVersion string, OptimizerEnabled bool, OptimizerRuns u
 	}
 }
 
+// Compiler is a struct that holds the configuration and sources for the Solidity compiler
+// It includes methods to compile the sources and write the output to files
+// It uses the v8go library to run the solc-js compiler in a JavaScript environment
 type Compiler struct {
 	*CompilerConfig `json:"compilerConfig"`
 
@@ -39,6 +45,10 @@ type Compiler struct {
 	SolcJs        string                       `json:"solcJs"`
 }
 
+// NewCompiler creates a new Compiler instance with the specified contracts directory and configuration
+// contractsDir: The directory containing the Solidity contracts
+// config: The compiler configuration ( generated from gosolc.NewCompilerConfig() )
+// solcJsPath: The path to the solc-js file (optional). If not provided, a default version will be used
 func NewCompiler(contractsDir string, config *CompilerConfig, solcJsPath string) (*Compiler, error) {
 	c := &Compiler{
 		CompilerConfig: config,
@@ -70,14 +80,19 @@ func NewCompiler(contractsDir string, config *CompilerConfig, solcJsPath string)
 
 }
 
+// NewCompiler_0_8_29 creates a new Compiler instance with the specified contracts directory, default configuration
+// and the solc-js version (0.8.29).
 func NewCompiler_0_8_29(contractsDir string) (*Compiler, error) {
 	return NewCompiler(contractsDir, defaultConfig, "")
 }
 
+// NewDefaultCompiler creates a new Compiler instance with the specified contracts directory and default configuration
+// and the solc-js version (0.8.29) as of now
 func NewDefaultCompiler(contractsDir string) (*Compiler, error) {
 	return NewCompiler_0_8_29(contractsDir)
 }
 
+// Compile() compiles the Solidity contracts using the solc-js compiler
 func (c Compiler) Compile() (CompilerOutput, error) {
 	iso := v8go.NewIsolate()
 	defer iso.Dispose()
@@ -113,6 +128,7 @@ func (c Compiler) Compile() (CompilerOutput, error) {
 	return contracts, nil
 }
 
+// CompileAndWriteOutput compiles the Solidity contracts and writes the output to files in ./solc-go-build
 func (c Compiler) CompileAndWriteOutput() error {
 	contracts, err := c.Compile()
 	if err != nil {
@@ -121,31 +137,5 @@ func (c Compiler) CompileAndWriteOutput() error {
 	if err := c.writeOutput(contracts); err != nil {
 		return fmt.Errorf("failed to write output: %w", err)
 	}
-	return nil
-}
-
-func (c Compiler) writeOutput(contracts CompilerOutput) error {
-	outputDir := "solc-go-build"
-	err := os.MkdirAll(outputDir, 0755)
-	if err != nil {
-		return fmt.Errorf("failed to create output directory: %w", err)
-	}
-
-	for _, fileContracts := range contracts {
-		for name, contract := range fileContracts.(map[string]interface{}) {
-			// Marshal contract data to JSON
-			contractJSON, err := json.MarshalIndent(contract, "", "  ")
-			if err != nil {
-				return fmt.Errorf("failed to marshal contract data to JSON: %w", err)
-			}
-			// Write to file
-			outputFile := filepath.Join(outputDir, name+".json")
-			err = os.WriteFile(outputFile, contractJSON, 0644)
-			if err != nil {
-				return fmt.Errorf("failed to write contract data to file: %w", err)
-			}
-		}
-	}
-
 	return nil
 }
